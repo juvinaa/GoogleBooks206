@@ -139,6 +139,33 @@ def visualize_data():
     plt.title('Average Ratings of Books')
     plt.show()
 
+# Function to calculate average ratings by genre
+def average_rating_by_genre():
+    conn = sqlite3.connect(DATABASE_NAME)  # Use DATABASE_NAME here
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT categories.name, AVG(books.average_rating) 
+        FROM categories
+        JOIN book_categories ON categories.id = book_categories.category_id
+        JOIN books ON books.book_unique_id = book_categories.book_unique_id
+        WHERE books.average_rating IS NOT NULL
+        GROUP BY categories.name;
+    ''')
+
+    results = cursor.fetchall()
+
+    genres = [result[0] for result in results]
+    avg_ratings = [result[1] for result in results]
+
+    # Visualize average rating by genre
+    plt.barh(genres, avg_ratings)
+    plt.xlabel('Average Rating')
+    plt.title('Average Rating by Genre')
+    plt.show()
+
+    conn.close()
+
 # Main function to run the project
 def main():
     query = random.choice(GENRES)  # Select a random genre
@@ -156,6 +183,9 @@ def main():
     print(f"Total books stored: {total_books_stored}")
     calculate_average_ratings()
     visualize_data()
+
+    # New calculations
+    average_rating_by_genre()  # Show average rating by genre
 
 if __name__ == "__main__":
     main()
