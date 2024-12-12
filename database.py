@@ -1,19 +1,10 @@
-import random
-import requests
 import sqlite3
-import matplotlib.pyplot as plt
+import json
+import requests
 
 # Set your API key here
 API_KEY = 'AIzaSyDp75ZQEtUDinfAW--tDW_pUBt4f6dyxas'
 DATABASE_NAME = 'book_database.db'
-
-# Predefined list of random genres
-GENRES = [
-    "fiction", "mystery", "fantasy", "romance", 
-    "science fiction", "history", "biography", 
-    "thriller", "adventure", "horror", "young adult",
-    "philosophy", "classics", "humor", "poetry"
-]
 
 # Function to fetch data from Google Books API
 def fetch_books(query, max_results=25, start_index=0):
@@ -23,7 +14,7 @@ def fetch_books(query, max_results=25, start_index=0):
 
 # Function to store data in SQLite database
 def store_data_in_db(data):
-    conn = sqlite3.connect(DATABASE_NAME)  # Use DATABASE_NAME here
+    conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
 
     # Create books, authors, categories, and junction tables
@@ -73,7 +64,7 @@ def store_data_in_db(data):
     # Loop through the fetched books and insert data into the database
     for item in data.get('items', []):
         volume_info = item['volumeInfo']
-        book_unique_id = item['id']  # Using book_unique_id instead of book_id
+        book_unique_id = item['id']
         title = volume_info.get('title', '')
         published_date = volume_info.get('publishedDate', '')
         average_rating = volume_info.get('averageRating', None)
@@ -109,83 +100,11 @@ def store_data_in_db(data):
     conn.commit()
     conn.close()
 
-# Function to calculate average ratings
-def calculate_average_ratings():
-    conn = sqlite3.connect(DATABASE_NAME)  # Use DATABASE_NAME here
+# Function to retrieve data from the database
+def get_data_from_db(query):
+    conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT AVG(average_rating) FROM books WHERE average_rating IS NOT NULL;
-    ''')
-    
-    average_rating = cursor.fetchone()[0]
-    print(f'Average Rating of Books: {average_rating}')
-
-    conn.close()
-
-# Function to visualize data
-def visualize_data():
-    conn = sqlite3.connect(DATABASE_NAME)  # Use DATABASE_NAME here
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT title, average_rating FROM books WHERE average_rating IS NOT NULL;')
+    cursor.execute(query)
     results = cursor.fetchall()
-
-    titles = [result[0] for result in results]
-    ratings = [result[1] for result in results]
-
-    plt.barh(titles, ratings)
-    plt.xlabel('Average Rating')
-    plt.title('Average Ratings of Books')
-    plt.show()
-
-# Function to calculate average ratings by genre
-def average_rating_by_genre():
-    conn = sqlite3.connect(DATABASE_NAME)  # Use DATABASE_NAME here
-    cursor = conn.cursor()
-
-    cursor.execute('''
-        SELECT categories.name, AVG(books.average_rating) 
-        FROM categories
-        JOIN book_categories ON categories.id = book_categories.category_id
-        JOIN books ON books.book_unique_id = book_categories.book_unique_id
-        WHERE books.average_rating IS NOT NULL
-        GROUP BY categories.name;
-    ''')
-
-    results = cursor.fetchall()
-
-    genres = [result[0] for result in results]
-    avg_ratings = [result[1] for result in results]
-
-    # Visualize average rating by genre
-    plt.barh(genres, avg_ratings)
-    plt.xlabel('Average Rating')
-    plt.title('Average Rating by Genre')
-    plt.show()
-
     conn.close()
-
-# Main function to run the project
-def main():
-    query = random.choice(GENRES)  # Select a random genre
-    print(f"Fetching books for genre: {query}")
-    
-    total_books_stored = 0
-    start_index = 0
-
-    # Only fetch 25 books
-    data = fetch_books(query, max_results=25, start_index=start_index)
-    if 'items' in data:
-        store_data_in_db(data)
-        total_books_stored += len(data['items'])
-
-    print(f"Total books stored: {total_books_stored}")
-    calculate_average_ratings()
-    visualize_data()
-
-    # New calculations
-    average_rating_by_genre()  # Show average rating by genre
-
-if __name__ == "__main__":
-    main()
+    return results
