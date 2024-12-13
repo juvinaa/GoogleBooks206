@@ -1,17 +1,18 @@
 import csv
 import sqlite3
-from database import get_data_from_db
 
 # Function to calculate average ratings
 def calculate_average_ratings():
+    import database
     query = '''
         SELECT AVG(average_rating) FROM books WHERE average_rating IS NOT NULL;
     '''
-    average_rating = get_data_from_db(query)[0][0]
+    average_rating = database.get_data_from_db(query)[0][0]
     return average_rating
 
 # Function to calculate average ratings by genre
 def average_rating_by_genre():
+    import database
     query = '''
         SELECT categories.name, AVG(books.average_rating) 
         FROM categories
@@ -20,7 +21,7 @@ def average_rating_by_genre():
         WHERE books.average_rating IS NOT NULL
         GROUP BY categories.name;
     '''
-    results = get_data_from_db(query)
+    results = database.get_data_from_db(query)
     genres = [result[0] for result in results]
     avg_ratings = [result[1] for result in results]
     return genres, avg_ratings

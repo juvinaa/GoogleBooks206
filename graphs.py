@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
-from database import get_data_from_db
 
 # Function to visualize data
 def visualize_data():
+    import database
     query = '''
         SELECT title, average_rating FROM books WHERE average_rating IS NOT NULL;
     '''
-    results = get_data_from_db(query)
+    results = database.get_data_from_db(query)
     titles = [result[0] for result in results]
     ratings = [result[1] for result in results]
 
@@ -17,6 +17,7 @@ def visualize_data():
 
 # Function to visualize average rating by genre
 def average_rating_by_genre_graph():
+    import database
     query = '''
         SELECT categories.name, AVG(books.average_rating) 
         FROM categories
@@ -25,7 +26,7 @@ def average_rating_by_genre_graph():
         WHERE books.average_rating IS NOT NULL
         GROUP BY categories.name;
     '''
-    results = get_data_from_db(query)
+    results = database.get_data_from_db(query)
     genres = [result[0] for result in results]
     avg_ratings = [result[1] for result in results]
 
